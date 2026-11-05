@@ -1,0 +1,9 @@
+/bin/
+*.db
+*.db-wal
+*.db-shm
+.env
+google-credentials.json
+google-token.json
+client_secret_*.json
+/herdr/build/

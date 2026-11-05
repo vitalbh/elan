@@ -1,0 +1,96 @@
+{
+  "$schema": "https://www.raycast.com/schemas/extension.json",
+  "name": "elan",
+  "title": "elan",
+  "description": "Próxima reunião, busca, pendências e code tasks do elan.",
+  "icon": "extension-icon.png",
+  "author": "vitalbh",
+  "license": "MIT",
+  "categories": [
+    "Productivity"
+  ],
+  "commands": [
+    {
+      "name": "menu-bar",
+      "title": "elan na Barra de Menu",
+      "subtitle": "elan",
+      "description": "Próxima reunião na barra de menu, com a agenda do dia, pendências, code tasks e avisos recentes.",
+      "mode": "menu-bar",
+      "interval": "1m"
+    },
+    {
+      "name": "search",
+      "title": "Buscar no elan",
+      "subtitle": "elan",
+      "description": "Busca híbrida nas reuniões e notas.",
+      "mode": "view"
+    },
+    {
+      "name": "pending",
+      "title": "Pendências do elan",
+      "subtitle": "elan",
+      "description": "Suas pendências e o que espera dos outros; concluir ou cancelar.",
+      "mode": "view"
+    },
+    {
+      "name": "note",
+      "title": "Anotar no elan",
+      "subtitle": "elan",
+      "description": "Salva uma nota no elan.",
+      "mode": "no-view",
+      "arguments": [
+        {
+          "name": "text",
+          "placeholder": "nota",
+          "type": "text",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "preferences": [
+    {
+      "name": "elanBin",
+      "title": "Binário do elan",
+      "description": "Caminho do elan.",
+      "type": "textfield",
+      "required": false,
+      "default": "~/.local/bin/elan"
+    },
+    {
+      "name": "profile",
+      "title": "Perfil",
+      "description": "Perfil do elan (--profile).",
+      "type": "textfield",
+      "required": false,
+      "default": "work"
+    },
+    {
+      "name": "elanHome",
+      "title": "Pasta de dados do elan",
+      "description": "Onde ficam os perfis (ELAN_HOME). Vazio: ~/Library/Application Support/elan. Para prints com dados falsos: rex/demo/home, com o binário rex/demo/elan.",
+      "type": "textfield",
+      "required": false,
+      "default": ""
+    },
+    {
+      "name": "rexApp",
+      "title": "App do Rex",
+      "description": "Trazido para frente ao abrir uma aba do elan.",
+      "type": "textfield",
+      "required": false,
+      "default": "Rex Beta"
+    }
+  ],
+  "dependencies": {
+    "@raycast/api": "^2.11.0",
+    "@raycast/utils": "^2.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "scripts": {
+    "build": "ray build",
+    "dev": "ray develop"
+  }
+}

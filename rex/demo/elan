@@ -1,0 +1,125 @@
+#!/usr/bin/env python3
+"""Fake elan for screenshots: answers the CLI contract (docs/cli-json.md) with
+made-up data. Used by record.sh through ELAN_BIN; never touches real data."""
+import json, sys
+from datetime import datetime, timedelta, timezone
+
+now = datetime.now().astimezone()
+def at(minutes):
+    return (now + timedelta(minutes=minutes)).replace(second=0, microsecond=0).isoformat()
+def day(days):
+    return (now - timedelta(days=days)).replace(hour=10, minute=0, second=0, microsecond=0).isoformat()
+
+def act(i, text, people, meeting, title, age, mine=True):
+    return {"id": i, "text": text, "people": people, "meeting_id": meeting, "meeting_title": title,
+            "meeting_at": day(age), "age_days": age, "mine": mine}
+
+MINE = [
+    act(101, "Ana Souza vai revisar o PR do checkout do Vega.", ["Ana Souza", "Bruno Lima"], "m-vega", "Daily Vega", 0),
+    act(102, "Ana vai enviar ao time de dados a planilha de métricas do Nimbus.", ["Ana Souza"], "m-nimbus", "Nimbus / produto", 1),
+    act(103, "Ana Souza vai marcar a conversa com o jurídico sobre o contrato novo.", ["Ana Souza"], "m-1on1", "Ana / Carla", 2),
+    act(104, "Ana vai documentar o fluxo de deploy do Blue Orion.", ["Ana Souza", "Diego Rocha"], "m-orion", "Blue Orion semanal", 5),
+    act(105, "Ana Souza vai testar a busca nova no app.", ["Ana Souza"], "m-vega", "Daily Vega", 6),
+]
+OTHERS = [
+    act(201, "Bruno Lima vai corrigir o timeout do serviço de pagamentos.", ["Bruno Lima"], "m-vega", "Daily Vega", 0, False),
+    act(202, "Carla Mendes vai mandar a proposta revisada do fornecedor.", ["Carla Mendes"], "m-1on1", "Ana / Carla", 2, False),
+    act(203, "Diego Rocha vai migrar os jobs do Blue Orion para o cluster novo.", ["Diego Rocha"], "m-orion", "Blue Orion semanal", 5, False),
+]
+CODE = [
+    {"id": 7, "text": "Ana vai adicionar cache na API de catálogo do Vega.", "project": "Vega", "folder": "/Users/ana/Dev/vega",
+     "context": "Começar pelo endpoint de busca; medir antes e depois.", "status": "open", "meeting_id": "m-vega",
+     "meeting_title": "Daily Vega", "meeting_at": day(1), "age_days": 1, "started_at": at(-90), "branch": "elan/adicionar-cache-na-api-de-catalogo",
+     "created_at": day(1)},
+    {"id": 8, "text": "Ana Souza vai criar o painel de erros do Nimbus.", "project": "Nimbus", "folder": "/Users/ana/Dev/nimbus",
+     "context": "", "status": "open", "meeting_id": "m-nimbus", "meeting_title": "Nimbus / produto", "meeting_at": day(3),
+     "age_days": 3, "started_at": None, "branch": "", "created_at": day(3)},
+    {"id": 9, "text": "Ana vai atualizar o SDK de pagamentos do Blue Orion para a v3.", "project": "Blue Orion", "folder": "/Users/ana/Dev/blue-orion",
+     "context": "", "status": "open", "meeting_id": "m-orion", "meeting_title": "Blue Orion semanal", "meeting_at": day(5),
+     "age_days": 5, "started_at": None, "branch": "", "created_at": day(5)},
+]
+SUGG = [
+    {"item_id": 301, "text": "Ana vai remover as flags antigas do checkout do Vega.", "project": "Vega", "folder": "/Users/ana/Dev/vega",
+     "people": ["Ana Souza"], "meeting_id": "m-vega", "meeting_title": "Daily Vega", "meeting_at": day(0), "age_days": 0},
+    {"item_id": 302, "text": "Ana Souza vai investigar o alerta de memória do worker do Nimbus.", "project": "Nimbus", "folder": "/Users/ana/Dev/nimbus",
+     "people": ["Ana Souza"], "meeting_id": "m-nimbus", "meeting_title": "Nimbus / produto", "meeting_at": day(1), "age_days": 1},
+    {"item_id": 303, "text": "Ana vai escrever os testes de contrato da API do Blue Orion.", "project": "Blue Orion", "folder": "/Users/ana/Dev/blue-orion",
+     "people": ["Ana Souza", "Diego Rocha"], "meeting_id": "m-orion", "meeting_title": "Blue Orion semanal", "meeting_at": day(5), "age_days": 5},
+]
+EVENTS = [
+    {"id": "e1", "title": "Daily Vega", "start": at(-150), "end": at(-135), "meet_link": "https://meet.google.com/abc-defg-hij",
+     "previous": {"id": "m-vega", "title": "Daily Vega", "started_at": day(1), "summary": "Checkout em revisão; busca nova em teste.", "open_actions": 3}},
+    {"id": "e2", "title": "Nimbus / produto", "start": at(8), "end": at(53), "meet_link": "https://meet.google.com/abc-defg-hij",
+     "my_response": "accepted",
+     "previous": {"id": "m-nimbus", "title": "Nimbus / produto", "started_at": day(7),
+                  "summary": "Priorizado o painel de erros; métricas de uso vão para o time de dados até sexta.", "open_actions": 4},
+     "my_actions": [MINE[1]], "other_actions": 2},
+    {"id": "e3", "title": "Ana / Carla", "start": at(120), "end": at(150), "meet_link": "https://meet.google.com/abc-defg-hij",
+     "my_response": "needsAction",
+     "previous": {"id": "m-1on1", "title": "Ana / Carla", "started_at": day(14), "summary": "Contrato novo e plano de férias.", "open_actions": 2},
+     "my_actions": [MINE[2]], "other_actions": 1},
+    {"id": "e4", "title": "Blue Orion semanal", "start": at(210), "end": at(270), "meet_link": "https://meet.google.com/abc-defg-hij",
+     "previous": {"id": "m-orion", "title": "Blue Orion semanal", "started_at": day(5), "summary": "Migração para o cluster novo em duas etapas.", "open_actions": 5},
+     "my_actions": [MINE[3]], "other_actions": 1},
+]
+NOTES = [
+    {"id": 3, "text": "Ver com a Carla se o contrato novo inclui suporte no fim de semana.", "source": "cli", "created_at": at(-25)},
+    {"id": 2, "text": "Ideia: alerta no Slack quando o deploy do Vega passar de 10 min.", "source": "mcp", "created_at": at(-200)},
+    {"id": 1, "text": "Livro recomendado pelo Bruno: Designing Data-Intensive Applications.", "source": "cli", "created_at": at(-1500)},
+]
+HITS = [
+    {"meeting_id": "m-vega", "title": "Daily Vega", "date": day(1), "type": "meeting_item", "kind": "decision",
+     "text": "O checkout do Vega passa a usar cache de 5 minutos no catálogo.\nPessoas: Ana Souza, Bruno Lima"},
+    {"meeting_id": "m-orion", "title": "Blue Orion semanal", "date": day(5), "type": "meeting_item", "kind": "summary",
+     "text": "Cache distribuído avaliado para a API do Blue Orion; decisão adiada para depois da migração."},
+    {"meeting_id": "", "title": "", "date": at(-200), "type": "note", "kind": "",
+     "text": "Ideia: alerta no Slack quando o deploy do Vega passar de 10 min."},
+]
+MEETING = """# Nimbus / produto
+
+{date} · série Nimbus / produto
+
+## Resumo
+Priorizado o painel de erros do Nimbus. As métricas de uso vão para o time de dados até sexta.
+
+## Decisões
+- O painel de erros entra antes do relatório mensal.
+- Alertas de memória do worker passam a abrir ticket automático.
+
+## Ações
+- [ ] Ana vai enviar ao time de dados a planilha de métricas do Nimbus. (Ana Souza)
+- [ ] Ana Souza vai criar o painel de erros do Nimbus. (Ana Souza)
+- [x] Bruno vai ajustar o limite de memória do worker. (Bruno Lima)
+
+https://docs.google.com/document/d/m-nimbus/edit
+"""
+
+args = [a for a in sys.argv[1:] if not a.startswith("--profile")]
+flags = [a for a in args if a.startswith("--")]
+pos = [a for a in args if not a.startswith("--")]
+def out(v):
+    print(json.dumps(v, ensure_ascii=False))
+
+cmd = " ".join(pos[:2]) if len(pos) > 1 and pos[0] in ("codetasks", "actions", "action") else (pos[0] if pos else "")
+if cmd == "briefing":
+    out({"day": day(0), "generated": at(-60), "events": EVENTS, "mine": MINE, "waiting": OTHERS,
+         "mine_total": 12, "waiting_total": 18, "decisions": [], "code_tasks": CODE})
+elif cmd == "codetasks":
+    out(CODE)
+elif cmd == "codetasks suggestions":
+    out(SUGG)
+elif cmd == "actions pending":
+    out(OTHERS if "--owner=others" in flags else MINE)
+elif cmd in ("action update", "codetasks update", "codetasks promote"):
+    out({"id": int(pos[2]) if len(pos) > 2 else 0, "status": "done"})
+elif cmd == "search":
+    out(HITS)
+elif cmd == "notes":
+    out(NOTES)
+elif cmd == "note":
+    print("nota salva")
+elif cmd == "meeting":
+    print(MEETING.format(date=(now - timedelta(days=7)).strftime("%d/%m/%Y 15:00")))
+else:
+    out({"error": "demo: comando não simulado: " + " ".join(pos)})
+    sys.exit(1)
